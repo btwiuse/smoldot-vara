@@ -18,14 +18,19 @@
 
 // This file launches a WebSocket server that exposes JSON-RPC functions.
 
-import * as smoldot from "https://deno.land/x/smoldot2/index-deno.js";
+// import * as smoldot from "https://deno.land/x/smoldot2/index-deno.js";
+import * as smoldot from "/home/btwiuse/smoldot/wasm-node/javascript/dist/mjs/index-deno.js";
 import polkadot from "https://github.com/smol-dot/smoldot/raw/main/demo-chain-specs/polkadot.json" assert {
+  type: "json",
+};
+import vara from "https://github.com/gear-tech/gear/raw/master/node/res/vara.json" assert {
   type: "json",
 };
 
 // Load the chain spec file.
 // const chainSpec = new TextDecoder("utf-8").decode(await Deno.readFile('../../../demo-chain-specs/polkadot.json'));
 const chainSpec = JSON.stringify(polkadot);
+// const chainSpec = JSON.stringify(vara);
 
 const PORT = Deno.env.get("PORT") ?? "9944";
 
@@ -59,7 +64,7 @@ const client = smoldot.start({
 // We add the chain ahead of time in order to preload it.
 // Once a client connects, the chain is added again, but smoldot is smart enough to not connect
 // a second time.
-client.addChain({ chainSpec, disableJsonRpc: false });
+await client.addChain({ chainSpec, disableJsonRpc: false });
 
 // Now spawn a WebSocket server in order to handle JSON-RPC clients.
 console.log(`JSON-RPC server now listening on port ${PORT}`);
@@ -67,42 +72,47 @@ console.log(
   `Please visit: https://cloudflare-ipfs.com/ipns/dotapps.io/?rpc=ws%3A%2F%2F127.0.0.1%3A${PORT}`,
 );
 
-const conn = Deno.listen({ port: Number(PORT) });
-const httpConn = Deno.serveHttp(await conn.accept());
+let session = 0;
 
-while (true) {
-  const event = await httpConn.nextRequest();
-  if (!event) {
-    break;
+Deno.serve({ port: Number(PORT) }, async (req: Request) => {
+  if ((req.headers.get("upgrade") || "").toLowerCase() !== "websocket") {
+    console.log("(demo) ignoring http request", req.url);
+    return new Response("Error: expected websocket request\n");
   }
 
   console.log("(demo) New JSON-RPC client connected.");
-
-  const { socket, response } = Deno.upgradeWebSocket(event.request);
+  const { socket, response } = Deno.upgradeWebSocket(req);
 
   const chain = await client.addChain({ chainSpec });
+
+  let s = session;
 
   (async () => {
     try {
       while (true) {
         const response = await chain.nextJsonRpcResponse();
+        console.log({ s, response });
         socket.send(response);
       }
     } catch (_error) {}
   })();
+
+  socket.onmessage = (event: Deno.MessageEvent) => {
+    if (typeof event.data === "string") {
+      let request = event.data;
+      console.log({ s, request });
+      chain.sendJsonRpc(request);
+    } else {
+      socket.close(1002); // Protocol error
+    }
+  };
 
   socket.onclose = () => {
     console.log("(demo) JSON-RPC client disconnected.");
     chain.remove();
   };
 
-  socket.onmessage = (event: Deno.MessageEvent) => {
-    if (typeof event.data === "string") {
-      chain.sendJsonRpc(event.data);
-    } else {
-      socket.close(1002); // Protocol error
-    }
-  };
-
-  event.respondWith(response);
-}
+  session += 1;
+  console.log("(demo) upgrading to ws connection", response);
+  return response;
+});
