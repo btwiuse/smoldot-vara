@@ -19,7 +19,7 @@
 // This file launches a WebSocket server that exposes JSON-RPC functions.
 
 // import * as smoldot from "https://deno.land/x/smoldot2/index-deno.js";
-import * as smoldot from "/home/btwiuse/smoldot/wasm-node/javascript/dist/mjs/index-deno.js";
+import * as smoldot from "https://github.com/btwiuse/smoldot/raw/main/wasm-node/javascript/dist/mjs/index-deno.js";
 import polkadot from "https://github.com/smol-dot/smoldot/raw/main/demo-chain-specs/polkadot.json" assert {
   type: "json",
 };
