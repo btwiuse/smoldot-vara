@@ -68,9 +68,7 @@ await client.addChain({ chainSpec, disableJsonRpc: false });
 
 // Now spawn a WebSocket server in order to handle JSON-RPC clients.
 console.log(`JSON-RPC server now listening on port ${PORT}`);
-console.log(
-  `Please visit: https://cloudflare-ipfs.com/ipns/dotapps.io/?rpc=ws%3A%2F%2F127.0.0.1%3A${PORT}`,
-);
+console.log(`Please visit: https://polkadot.js.org/apps?rpc=ws://127.0.0.1:${PORT}`);
 
 let session = 0;
 

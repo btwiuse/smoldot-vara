@@ -2,6 +2,6 @@
 
 export PORT=$RANDOM
 
-ufo teleport https://ufo.k0s.io http://127.0.0.1:$PORT &
+ufo teleport https://ufo.k0s.io/polkadot http://127.0.0.1:$PORT &
 
 ./smoldot-polkadot.ts
