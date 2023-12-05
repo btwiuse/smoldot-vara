@@ -36,11 +36,11 @@ const PORT = Deno.env.get("PORT") ?? "9944";
 
 const client = smoldot.start({
   maxLogLevel: 3, // Can be increased for more verbosity
-  forbidTcp: false,
+  // forbidTcp: false,
   forbidWs: false,
   forbidNonLocalWs: false,
   forbidWss: false,
-  cpuRateLimit: 0.5,
+  cpuRateLimit: 20,
   logCallback: (_level, target, message) => {
     // As incredible as it seems, there is currently no better way to print the current time
     // formatted in a certain way.
