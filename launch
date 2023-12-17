@@ -2,6 +2,8 @@
 
 export PORT=$RANDOM
 
+trap 'kill $BGPID; exit' INT
 ufo teleport https://ufo.k0s.io/${1:-polkadot} http://127.0.0.1:$PORT &
+BGPID=$!
 
 ./${1:-polkadot}.ts
